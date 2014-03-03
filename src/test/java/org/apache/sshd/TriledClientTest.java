@@ -20,28 +20,17 @@
 package org.apache.sshd;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.security.KeyPair;
-import java.util.Arrays;
 
-import org.apache.sshd.client.UserAuth;
-import org.apache.sshd.client.auth.UserAuthPublicKey;
-import org.apache.sshd.client.channel.ChannelExec;
-import org.apache.sshd.common.KeyPairProvider;
-import org.apache.sshd.common.NamedFactory;
-import org.apache.sshd.common.util.NoCloseOutputStream;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.CommandFactory;
 import org.apache.sshd.server.command.UnknownCommand;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.util.BaseTest;
 import org.apache.sshd.util.BogusPublickeyAuthenticator;
-import org.apache.sshd.util.Utils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
