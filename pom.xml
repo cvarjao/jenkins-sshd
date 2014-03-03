@@ -7,6 +7,18 @@
 	<properties>
 		<sshd.version>0.10.0</sshd.version>
 	</properties>
+	<build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+        </configuration>
+      </plugin>
+    </plugins>
+    </build>
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.sshd</groupId>
@@ -66,6 +78,12 @@
 			<version>1.50</version>
 		</dependency>
 		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 		    <groupId>org.jenkins-ci</groupId>
 		    <artifactId>trilead-ssh2</artifactId>
 		    <version>build217-jenkins-3</version>
@@ -89,4 +107,5 @@
 	        <url>http://repo.jenkins-ci.org/public</url>
 	    </repository>
 	 </repositories>
+
 </project>
