@@ -34,6 +34,7 @@ import org.apache.sshd.client.auth.UserAuthPublicKey;
 import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.common.KeyPairProvider;
 import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.common.io.mina.MinaServiceFactoryFactory;
 import org.apache.sshd.common.util.NoCloseOutputStream;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.CommandFactory;
@@ -84,7 +85,7 @@ public class ClientTest extends BaseTest {
             }
         });
         sshd.setPublickeyAuthenticator(new BogusPublickeyAuthenticator());
-
+        sshd.setIoServiceFactoryFactory(new MinaServiceFactoryFactory());
         sshd.start();
     }
 
@@ -115,7 +116,7 @@ public class ClientTest extends BaseTest {
         channel.setOut(new NoCloseOutputStream(System.out));
         channel.setErr(new NoCloseOutputStream(System.err));
         assertTrue(channel.open().await().isOpened());
-        channel.waitFor(ClientChannel.EXIT_STATUS, 0);
+        channel.waitFor(ClientChannel.EXIT_STATUS, 5000);
         
         Integer exitStatus=channel.getExitStatus();
         assertNotNull(exitStatus);
@@ -126,7 +127,7 @@ public class ClientTest extends BaseTest {
         channel.setOut(new NoCloseOutputStream(System.out));
         channel.setErr(new NoCloseOutputStream(System.err));
         channel.open().await();
-        channel.waitFor(ClientChannel.EXIT_STATUS, 0);
+        channel.waitFor(ClientChannel.EXIT_STATUS, 5000);
         
         exitStatus=channel.getExitStatus();
         assertNotNull(exitStatus);
@@ -136,38 +137,6 @@ public class ClientTest extends BaseTest {
         client.stop();
     }
     
-    @Test
-    public void testTrileadClient() throws IOException, InterruptedException{
-    	Connection connection;
-    	connection = new Connection("localhost", port);
-    	connection.connect();
-    	
-    	File key = new File("key.pem");
-    	String pass="";
-    	String username="userx";
-    	
-    	boolean isAuthenticated;
-    	if(PuTTYKey.isPuTTYKeyFile(key)) {
-    	       String openSshKey = new PuTTYKey(key, pass).toOpenSSH();
-    	       isAuthenticated = connection.authenticateWithPublicKey(username, openSshKey.toCharArray(), pass);
-    	   } else {
-    	       isAuthenticated = connection.authenticateWithPublicKey(username, key, pass);
-    	   }
-    	
-    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    	int exitStatus=connection.exec("true", baos);
-    	assertEquals(TrueCommand.EXIT_VALUE, exitStatus);
-    	String s = baos.toString();
-    	baos.reset();
-    	exitStatus=connection.exec("set", baos);
-    	s = baos.toString();
-    	assertEquals(TrueCommand.EXIT_VALUE, exitStatus);
-    	
-    	baos.reset();
-    	exitStatus=connection.exec("false", baos);
-    	s = baos.toString();
-    	assertEquals(FalseCommand.EXIT_VALUE, exitStatus);
-    }
     public static void main(String[] args) throws Exception {
         SshClient.main(args);
     }
