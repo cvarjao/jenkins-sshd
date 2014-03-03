@@ -6,6 +6,8 @@ import java.util.Arrays;
 
 import org.apache.sshd.SshServer;
 import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.common.io.IoServiceFactory;
+import org.apache.sshd.common.io.mina.MinaServiceFactory;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.sftp.SftpSubsystem;
@@ -44,20 +46,24 @@ public class Sshd {
 		sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(new SftpSubsystem.Factory()));
 		sshd.setFileSystemFactory(new JenkinsFileSystemFactory());
 	    sshd.setCommandFactory(new JenkinsCommandFactory());
+		//sshd.setIoServiceFactoryFactory(new MinaServiceFactoryFactory());
+		//sshd.setIoServiceFactoryFactory(new Nio2ServiceFactoryFactory());
 		
 		sshd.start();
-		while(true){
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 	public static void main(String[] args) {
 		try {
+			System.setProperty(IoServiceFactory.class.getName(), MinaServiceFactory.class.getName());
+			//org.apache.sshd.SshServer.main(new String[]{"-p", "22", "-io", "nio2"});
 			new Sshd().start();
-		} catch (IOException e) {
+			while(true){
+				try {
+					Thread.sleep(Integer.MAX_VALUE);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}

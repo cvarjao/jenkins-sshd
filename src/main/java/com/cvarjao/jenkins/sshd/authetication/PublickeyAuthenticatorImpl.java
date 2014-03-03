@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.PublicKey;
+import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class PublickeyAuthenticatorImpl implements PublickeyAuthenticator {
 	}
 	public boolean authenticate(String username, PublicKey key, ServerSession session) {
 		try {
-			if (key instanceof RSAPublicKey) {
+			if (key instanceof RSAPublicKey || key instanceof DSAPublicKey) {
 				String s1 = new String(encode(key, ANY_USER));
 				if (logger.isDebugEnabled()){
 					logger.debug(AuthorizedKeysDecoder.encodePublicKey(key, username));

@@ -6,10 +6,9 @@ import org.apache.sshd.server.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TrueCommand extends BaseCommand {
-	public static final String COMMAND="true";
-	public static final int EXIT_VALUE=0;
-	
+public class FalseCommand extends BaseCommand {
+	public static final String COMMAND="false";
+	public static final int EXIT_VALUE=1;
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 	
 	@Override
