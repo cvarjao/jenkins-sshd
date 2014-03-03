@@ -20,10 +20,13 @@
 package org.apache.sshd;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.lang.ProcessBuilder.Redirect;
+import java.security.Key;
 import java.security.KeyPair;
 import java.security.cert.CertificateEncodingException;
 
@@ -36,6 +39,7 @@ import org.apache.sshd.util.BaseTest;
 import org.apache.sshd.util.BogusPublickeyAuthenticator;
 import org.apache.sshd.util.PemUtil;
 import org.apache.sshd.util.Utils;
+import org.bouncycastle.openssl.PEMWriter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,14 +47,13 @@ import org.junit.Test;
 import com.cvarjao.jenkins.sshd.command.FalseCommand;
 import com.cvarjao.jenkins.sshd.command.SetCommand;
 import com.cvarjao.jenkins.sshd.command.TrueCommand;
-import com.trilead.ssh2.Connection;
 
 /**
  * TODO Add javadoc
  *
  * @author <a href="mailto:dev@mina.apache.org">Apache MINA SSHD Project</a>
  */
-public class TriledClientTest extends BaseTest {
+public class PlinkClientTest extends BaseTest {
 
     private SshServer sshd;
     private int port;
@@ -89,33 +92,36 @@ public class TriledClientTest extends BaseTest {
         }
     }
     
+    public static String convertToPem(Key cert) throws IOException{
+    	StringWriter writer=new StringWriter();
+        PEMWriter pw = new PEMWriter(writer);
+        pw.writeObject(cert);
+        pw.flush();
+        pw.close();
+        return writer.toString();
+    }
+    
     @Test
     public void testTrileadClient() throws IOException, InterruptedException, CertificateEncodingException{
-    	Connection connection;
-    	connection = new Connection("localhost", port);
-    	connection.connect();
-    	
     	KeyPair pair = Utils.createTestHostKeyProvider().loadKey(KeyPairProvider.SSH_RSA);
     	String pubkey=PemUtil.convertToPem(pair.getPrivate());
-    	String pass=null;
     	
-    	boolean isAuthenticated=connection.authenticateWithPublicKey(username, pubkey.toCharArray(), pass);
-    	assertTrue(isAuthenticated);
-    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    	int exitStatus=connection.exec("true", baos);
-    	assertEquals(TrueCommand.EXIT_VALUE, exitStatus);
-    	String s = baos.toString();
-    	baos.reset();
-    	exitStatus=connection.exec("set", baos);
-    	s = baos.toString();
-    	assertEquals(TrueCommand.EXIT_VALUE, exitStatus);
+    	File keyFile= new File("test.pem");
+    	FileWriter writer=new FileWriter(keyFile);
+    	writer.write(pubkey);
+    	writer.close();
     	
-    	baos.reset();
-    	exitStatus=connection.exec("false", baos);
-    	s = baos.toString();
-    	assertEquals(FalseCommand.EXIT_VALUE, exitStatus);
-    }
-    public static void main(String[] args) throws Exception {
-        SshClient.main(args);
+    	int exitValue=-1;
+		try {
+			ProcessBuilder builder = new ProcessBuilder("plink", "-ssh", "localhost", "-P", Integer.toString(port), "-l", username, "-N", "-i", keyFile.getAbsolutePath(), "-batch", "true");
+			builder.redirectError(Redirect.INHERIT);
+			builder.redirectOutput(Redirect.INHERIT);
+			builder.redirectInput(Redirect.INHERIT);
+			Process process = builder.start();        
+			exitValue = process.waitFor();
+		} finally{
+			keyFile.delete();
+		}
+        assertEquals(1, exitValue);
     }
 }
