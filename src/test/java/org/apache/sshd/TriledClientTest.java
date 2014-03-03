@@ -19,18 +19,29 @@
 
 package org.apache.sshd;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 
+import javax.xml.bind.DatatypeConverter;
+
+import org.apache.sshd.common.KeyPairProvider;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.CommandFactory;
 import org.apache.sshd.server.command.UnknownCommand;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.util.BaseTest;
 import org.apache.sshd.util.BogusPublickeyAuthenticator;
+import org.apache.sshd.util.Utils;
+import org.bouncycastle.openssl.PEMWriter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,7 +65,7 @@ public class TriledClientTest extends BaseTest {
     
     @Before
     public void setUp() throws Exception {
-        port = 22;
+        port = Utils.getFreePort();
 
         sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
@@ -84,25 +95,28 @@ public class TriledClientTest extends BaseTest {
             Thread.sleep(50);
         }
     }
-
+    
+    public static String convertToPem(Key cert) throws IOException{
+    	StringWriter writer=new StringWriter();
+        PEMWriter pw = new PEMWriter(writer);
+        pw.writeObject(cert);
+        pw.flush();
+        pw.close();
+        return writer.toString();
+    }
+    
     @Test
-    public void testTrileadClient() throws IOException, InterruptedException{
+    public void testTrileadClient() throws IOException, InterruptedException, CertificateEncodingException{
     	Connection connection;
     	connection = new Connection("localhost", port);
     	connection.connect();
     	
-    	File key = new File("key.pem");
-    	String pass="";
-    	String username="userx";
+    	KeyPair pair = Utils.createTestHostKeyProvider().loadKey(KeyPairProvider.SSH_RSA);
+    	String pubkey=convertToPem(pair.getPrivate());
+    	String pass=null;
     	
-    	boolean isAuthenticated;
-    	if(PuTTYKey.isPuTTYKeyFile(key)) {
-    	       String openSshKey = new PuTTYKey(key, pass).toOpenSSH();
-    	       isAuthenticated = connection.authenticateWithPublicKey(username, openSshKey.toCharArray(), pass);
-    	   } else {
-    	       isAuthenticated = connection.authenticateWithPublicKey(username, key, pass);
-    	   }
-    	
+    	boolean isAuthenticated=connection.authenticateWithPublicKey(username, pubkey.toCharArray(), pass);
+    	assertTrue(isAuthenticated);
     	ByteArrayOutputStream baos = new ByteArrayOutputStream();
     	int exitStatus=connection.exec("true", baos);
     	assertEquals(TrueCommand.EXIT_VALUE, exitStatus);
