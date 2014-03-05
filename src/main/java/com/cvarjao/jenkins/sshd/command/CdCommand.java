@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.cvarjao.jenkins.sshd.api.HasChangeDir;
 
-public class CdCommand extends BaseCommand implements FileSystemAware /*, SessionAware */ {
+public class CdCommand extends BaseCommand implements Runnable, FileSystemAware /*, SessionAware */ {
 	public static final String COMMAND="cd";
 	protected final Logger logger = LoggerFactory.getLogger(getClass());
 	private FileSystemView fileSystemView;
@@ -24,6 +24,16 @@ public class CdCommand extends BaseCommand implements FileSystemAware /*, Sessio
 	
 	@Override
 	public void start(Environment env) throws IOException {
+		new Thread(this).start();
+	}
+
+	@Override
+	public void setFileSystemView(FileSystemView view) {
+		this.fileSystemView=view;
+	}
+
+	@Override
+	public void run() {
 		logger.debug(COMMAND+" "+(args!=null?(StringUtils.join(args)):""));
 		
 		int exitValue = ScpHelper.OK;
@@ -39,9 +49,5 @@ public class CdCommand extends BaseCommand implements FileSystemAware /*, Sessio
             callback.onExit(exitValue, exitMessage);
         }
 	}
-
-	@Override
-	public void setFileSystemView(FileSystemView view) {
-		this.fileSystemView=view;
-	}
+	
 }

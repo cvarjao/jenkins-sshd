@@ -6,7 +6,7 @@ import org.apache.sshd.server.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TrueCommand extends BaseCommand {
+public class TrueCommand extends BaseCommand implements Runnable {
 	public static final String COMMAND="true";
 	public static final int EXIT_VALUE=0;
 	
@@ -14,11 +14,13 @@ public class TrueCommand extends BaseCommand {
 	
 	@Override
 	public void start(Environment env) throws IOException {
-		int exitValue = EXIT_VALUE;
-		String exitMessage = null;
-		
+		new Thread(this).start();
+	}
+
+	@Override
+	public void run() {
         if (callback != null) {
-            callback.onExit(exitValue, exitMessage);
+            callback.onExit(EXIT_VALUE);
         }
 	}
 }

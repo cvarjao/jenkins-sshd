@@ -38,7 +38,7 @@ public class AndCommand extends TrueCommand implements JoinCommand, FileSystemAw
 		this.right = right;
 	}
 	
-	public void runCommand(Command command, Environment env, ExitCallback argExitCallback) throws IOException {
+	public void startCommand(Command command, Environment env, ExitCallback argExitCallback) throws IOException {
 		command.setInputStream(in);
 		command.setOutputStream(out);
 		command.setErrorStream(err);
@@ -48,7 +48,7 @@ public class AndCommand extends TrueCommand implements JoinCommand, FileSystemAw
 	
 	@Override
 	public void start(final Environment env) throws IOException {
-		runCommand(this.left, env, new ExitCallback(){
+		startCommand(this.left, env, new ExitCallback(){
 			@Override
 			public void onExit(int exitValue) {
 				onExit(exitValue, null);
@@ -58,7 +58,7 @@ public class AndCommand extends TrueCommand implements JoinCommand, FileSystemAw
 			public void onExit(int exitValue, String exitMessage) {
 				if (exitValue==ScpHelper.OK){
 					try {
-						runCommand(right, env, callback);
+						startCommand(right, env, callback);
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
