@@ -66,7 +66,7 @@ public class PlinkClientTest extends BaseTest {
         sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
-        
+        //sshd.setKeyExchangeFactories(Arrays.<NamedFactory<KeyExchange>>asList(new DHG1.Factory()));
         sshd.setCommandFactory(new CommandFactory() {
             public Command createCommand(String command) {
             	if (TrueCommand.COMMAND.equals(command)){
@@ -112,16 +112,24 @@ public class PlinkClientTest extends BaseTest {
     	writer.close();
     	
     	int exitValue=-1;
+    	long stderrSize=-1;
+    	File stderr=new File("stderr.out");
+    	File stdout=new File("stdout.out");
 		try {
+			
 			ProcessBuilder builder = new ProcessBuilder("plink", "-ssh", "localhost", "-P", Integer.toString(port), "-l", username, "-N", "-i", keyFile.getAbsolutePath(), "-batch", "true");
-			builder.redirectError(Redirect.INHERIT);
-			builder.redirectOutput(Redirect.INHERIT);
+			builder.redirectError(stderr);
+			builder.redirectOutput(stdout);
 			builder.redirectInput(Redirect.INHERIT);
 			Process process = builder.start();        
 			exitValue = process.waitFor();
+			stderrSize=stderr.length();
 		} finally{
 			keyFile.delete();
+			stderr.delete();
+			stdout.delete();
 		}
-        assertEquals(1, exitValue);
+		assertEquals("plink stderr should be empty", 0, stderrSize);
+		assertEquals(1, exitValue);
     }
 }
