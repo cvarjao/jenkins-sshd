@@ -135,4 +135,8 @@
 	      <url>https://repository.apache.org/content/groups/staging/</url>
 	    </repository>
 	 </repositories>
+	<scm>
+		<url>https://github.com/cvarjao/jenkins-sshd.git</url>
+	</scm>
+	<description>Basic SSHD implementation for suporting jenkins-ssh-slave on windows</description>
 </project>
