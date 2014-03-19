@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import org.apache.sshd.common.file.FileSystemAware;
 import org.apache.sshd.common.file.FileSystemView;
 import org.apache.sshd.common.file.SshFile;
+import org.apache.sshd.common.file.nativefs.NativeSshFile;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
 import org.slf4j.Logger;
@@ -15,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.cvarjao.jenkins.sshd.api.HasChangeDir;
 import com.cvarjao.jenkins.sshd.file.NativeFileUtil;
-import com.cvarjao.sshd.file.nativefs.INativeSshFile;
 
 public class ExecCommand extends BaseCommand implements Command, FileSystemAware, Runnable {
 	private static final Logger LOG = LoggerFactory.getLogger(ExecCommand.class);
@@ -45,10 +45,10 @@ public class ExecCommand extends BaseCommand implements Command, FileSystemAware
 				LOG.info("Could not set environment for command", e);
 			}
 		}
-		LOG.info("Starting shell with command: '{}' and env: {}", builder.command(), builder.environment());
+		LOG.info("Starting Process: '{}' and env: {}", builder.command(), builder.environment());
 
 		SshFile sshFile = this.fileSystemView.getFile(((HasChangeDir) this.fileSystemView).getCurrentDir());
-		File nativeFile = ((INativeSshFile) sshFile).getNativeFile();
+		File nativeFile = ((NativeSshFile)sshFile).getPhysicalFile();
 		builder.directory(nativeFile);
 		process = builder.start();
 		this.shellIn = process.getInputStream();

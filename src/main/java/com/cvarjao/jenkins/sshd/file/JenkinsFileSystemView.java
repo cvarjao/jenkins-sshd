@@ -9,26 +9,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cvarjao.jenkins.sshd.api.HasChangeDir;
-import com.cvarjao.sshd.file.nativefs.INativeSshFile;
-import com.cvarjao.sshd.file.nativefs.NativeFileSystemView;
-import com.cvarjao.sshd.file.nativefs.NativeSshFile;
 
 /***
  * Copied from NativeFileSystemView
  * @author clecio
  *
  */
-public class JenkinsFileSystemView extends NativeFileSystemView implements HasChangeDir {
+public class JenkinsFileSystemView extends org.apache.sshd.common.file.nativefs.NativeFileSystemView implements HasChangeDir {
     private final Logger LOG = LoggerFactory.getLogger(JenkinsFileSystemView.class);
     private static final AttributeKey<String> CURRENT_DIR = new AttributeKey<String>();
 
     private Session session;
     private boolean caseInsensitive = false;
-
-    public JenkinsFileSystemView(Session session) {
+    private String virtualHomeDir;
+    private String physicalRootDir;
+    
+    public JenkinsFileSystemView(Session session, String physicalDir, String homeDir) {
 		super(session.getUsername(), false);
         this.caseInsensitive=false;
 		this.session=session;
+		this.physicalRootDir=physicalDir;
+		this.virtualHomeDir=homeDir;
 		if (this.session.getAttribute(CURRENT_DIR)==null){
 			this.session.setAttribute(CURRENT_DIR, getVirtualUserDir());
 		}
@@ -49,7 +50,7 @@ public class JenkinsFileSystemView extends NativeFileSystemView implements HasCh
      */
     @Override
     public String getPhysicalUserDir() {
-    	return "C:/Data/projects/jenkins-windows-sshd/workdir/";
+    	return this.physicalRootDir;
 	}
 
 	/**
@@ -60,7 +61,7 @@ public class JenkinsFileSystemView extends NativeFileSystemView implements HasCh
 	 */
     @Override
 	public String getVirtualUserDir() {
-		return "/apps_nt/jenkins";
+		return this.virtualHomeDir;
 	}
 	
 	public boolean isCaseInsensitive(){
@@ -77,8 +78,4 @@ public class JenkinsFileSystemView extends NativeFileSystemView implements HasCh
 		this.session.setAttribute(CURRENT_DIR, currDir);
 	}
 	
-	@Override
-	public INativeSshFile createNativeSshFile(String fileName2, File fileObj, String userName2) {
-		return new NativeSshFileWrapper(super.createNativeSshFile(fileName2, fileObj, userName2));
-	}
 }

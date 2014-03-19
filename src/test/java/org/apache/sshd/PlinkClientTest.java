@@ -125,8 +125,8 @@ public class PlinkClientTest extends BaseTest {
 			exitValue = process.waitFor();
 			stderrSize=stderr.length();
 		} finally{
-			keyFile.delete();
-			stderr.delete();
+			keyFile.delete();	
+			//stderr.delete();
 			stdout.delete();
 		}
 		assertEquals("plink stderr should be empty", 0, stderrSize);

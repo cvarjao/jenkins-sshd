@@ -18,7 +18,10 @@ import com.cvarjao.jenkins.sshd.api.JoinCommand;
 import com.cvarjao.jenkins.sshd.command.AndCommand;
 import com.cvarjao.jenkins.sshd.command.CdCommand;
 import com.cvarjao.jenkins.sshd.command.ExecCommand;
+import com.cvarjao.jenkins.sshd.command.MkdirCommand;
+import com.cvarjao.jenkins.sshd.command.RmCommand;
 import com.cvarjao.jenkins.sshd.command.SetCommand;
+import com.cvarjao.jenkins.sshd.command.TestCommand;
 import com.cvarjao.jenkins.sshd.command.TrueCommand;
 import com.cvarjao.jenkins.sshd.file.NativeFileUtil;
 
@@ -64,6 +67,12 @@ public class JenkinsCommandFactory implements CommandFactory {
 			return new CdCommand(commands.length>1?Arrays.copyOfRange(commands, 1, commands.length):new String[0]);
 		}else if (SetCommand.COMMAND.equals(commands[0])){
 			return new SetCommand(commands.length>1?Arrays.copyOfRange(commands, 1, commands.length):new String[0]);
+		}else if (TestCommand.COMMAND.equals(commands[0])){
+			return new TestCommand(commands.length>1?Arrays.copyOfRange(commands, 1, commands.length):new String[0]);
+		}else if (MkdirCommand.COMMAND.equals(commands[0])){
+			return new MkdirCommand(commands.length>1?Arrays.copyOfRange(commands, 1, commands.length):new String[0]);
+		}else if (RmCommand.COMMAND.equals(commands[0])){
+			return new RmCommand(commands.length>1?Arrays.copyOfRange(commands, 1, commands.length):new String[0]);
 		}else if (commands[0].equals("java")){
 			commands[0]=NativeFileUtil.normalizeSeparateChar(System.getProperty("java.home")+"/bin/java.exe");
 			/*

@@ -9,9 +9,15 @@ import org.apache.sshd.common.file.FileSystemView;
 import com.cvarjao.jenkins.sshd.file.JenkinsFileSystemView;
 
 public class JenkinsFileSystemFactory implements FileSystemFactory {
+	private String rootDir;
+	private String homeDir;
 	
+	public JenkinsFileSystemFactory(String rootDir, String homeDir) {
+		this.rootDir=rootDir;
+		this.homeDir=homeDir;
+	}
 	@Override
 	public FileSystemView createFileSystemView(Session session) throws IOException {
-		return new JenkinsFileSystemView(session);
+		return new JenkinsFileSystemView(session,rootDir, homeDir);
 	}
 }
