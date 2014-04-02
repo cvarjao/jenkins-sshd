@@ -6,4 +6,5 @@ This project creates a SSHD server implementing only the necessary commands used
 Using an thin SSH server allows:
 * slave.jar provision/update
 * encrypted channel  (instead of the non-encrypted JNLP)
-* ability to restart slave from master with a new (clean) JVM
+* ability to restart slave from master with a new (clean) JVM ([Now supported by JNLP](http://goo.gl/fb/sXQRi))
+* consistency between different OS
