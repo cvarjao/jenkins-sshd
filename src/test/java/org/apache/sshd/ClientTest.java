@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.util.Arrays;
+import java.util.Properties;
 
 import org.apache.sshd.client.UserAuth;
 import org.apache.sshd.client.auth.UserAuthPublicKey;
@@ -48,9 +49,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.kohsuke.putty.PuTTYKey;
 
+import com.cvarjao.jenkins.sshd.Sshd;
 import com.cvarjao.jenkins.sshd.command.FalseCommand;
 import com.cvarjao.jenkins.sshd.command.SetCommand;
 import com.cvarjao.jenkins.sshd.command.TrueCommand;
+import com.cvarjao.jenkins.sshd.factory.JenkinsCommandFactory;
+import com.cvarjao.jenkins.sshd.factory.JenkinsFileSystemFactory;
+import com.cvarjao.jenkins.sshd.factory.JenkinsSessionFactory;
+import com.cvarjao.jenkins.sshd.file.NativeFileUtil;
 import com.trilead.ssh2.Connection;
 
 /**
@@ -66,26 +72,14 @@ public class ClientTest extends BaseTest {
     
     @Before
     public void setUp() throws Exception {
-        port = 22;
-
-        sshd = SshServer.setUpDefaultServer();
-        sshd.setPort(port);
+    	port=22;
+    	Properties props=new Properties();
+    	props.setProperty(Sshd.SSHD_PORT, Integer.toString(port));
+    	props.setProperty(Sshd.SSHD_ROOT_DIR, NativeFileUtil.normalizeSeparateChar(System.getProperty("user.dir"))+"/workDir/");
+    	props.setProperty(Sshd.SSHD_HOME_DIR, "/");
+        sshd = Sshd.createStub(props);       
         sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
-        
-        sshd.setCommandFactory(new CommandFactory() {
-            public Command createCommand(String command) {
-            	if (TrueCommand.COMMAND.equals(command)){
-            		return new TrueCommand();
-            	}else if (FalseCommand.COMMAND.equals(command)){
-            		return new FalseCommand();
-            	}else if (SetCommand.COMMAND.equals(command)){
-            		return new SetCommand(new String[0]);
-            	}
-                return new UnknownCommand(command);
-            }
-        });
         sshd.setPublickeyAuthenticator(new BogusPublickeyAuthenticator());
-        sshd.setIoServiceFactoryFactory(new MinaServiceFactoryFactory());
         sshd.start();
     }
 
@@ -97,6 +91,16 @@ public class ClientTest extends BaseTest {
         }
     }
 
+    public ChannelExec doExec(ClientSession session, String command) throws Exception {
+        ChannelExec channel = session.createExecChannel(command);
+        channel.setOut(new NoCloseOutputStream(System.out));
+        channel.setErr(new NoCloseOutputStream(System.err));
+        assertTrue(channel.open().await().isOpened());
+        channel.waitFor(ClientChannel.EXIT_STATUS, 5000);
+        channel.close(false).await();
+        
+        return channel;
+    }
     @Test
     public void testSshClient() throws Exception {
         SshClient client = SshClient.setUpDefaultClient();
@@ -110,30 +114,30 @@ public class ClientTest extends BaseTest {
         //assertTrue(session.authPublicKey(username, pair).await().isSuccess());
         
         
-        ChannelExec channel = session.createExecChannel("true");
-        
-        
-        channel.setOut(new NoCloseOutputStream(System.out));
-        channel.setErr(new NoCloseOutputStream(System.err));
-        assertTrue(channel.open().await().isOpened());
-        channel.waitFor(ClientChannel.EXIT_STATUS, 5000);
+        ChannelExec channel = doExec(session, "true");
         
         Integer exitStatus=channel.getExitStatus();
         assertNotNull(exitStatus);
         assertEquals((int)TrueCommand.EXIT_VALUE, (int)exitStatus);
-        channel.close(true).await();
         
-        channel=session.createExecChannel("false");
-        channel.setOut(new NoCloseOutputStream(System.out));
-        channel.setErr(new NoCloseOutputStream(System.err));
-        channel.open().await();
-        channel.waitFor(ClientChannel.EXIT_STATUS, 5000);
         
+        channel=doExec(session, "false");
         exitStatus=channel.getExitStatus();
         assertNotNull(exitStatus);
-        assertEquals(FalseCommand.EXIT_VALUE, (int)exitStatus);
+        assertEquals((int)FalseCommand.EXIT_VALUE, (int)exitStatus);
+        
+        channel=doExec(session, "java -version");
+        exitStatus=channel.getExitStatus();
+        assertNotNull(exitStatus);
+        assertEquals((int)TrueCommand.EXIT_VALUE, (int)exitStatus);
+        
+        channel=doExec(session, "mkdir -p '/slaves/fritz' && cd '/slaves/fritz' && java -version");
+        exitStatus=channel.getExitStatus();
+        assertNotNull(exitStatus);
+        assertEquals((int)TrueCommand.EXIT_VALUE, (int)exitStatus);
         
         session.close(false).await();
+        
         client.stop();
     }
     

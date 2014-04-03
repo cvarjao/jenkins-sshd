@@ -3,6 +3,7 @@ package com.cvarjao.jenkins.sshd.factory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,36 +28,60 @@ import com.cvarjao.jenkins.sshd.file.NativeFileUtil;
 
 public class JenkinsCommandFactory implements CommandFactory {
 	private final Logger logger=LoggerFactory.getLogger(getClass());
-	private Pattern commandLinePattern=Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
+	private Pattern commandLinePattern=Pattern.compile("\\s+\\Q&&\\E\\s+");
+	private Pattern commandArgsPattern=Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
 	private CommandFactory scpCommandFactory=new ScpCommandFactory();
 	
+	
+	public Command joinCommand(Command cmd, Command newCmd){
+		Command retCmd=newCmd;
+		if (cmd instanceof JoinCommand){
+			retCmd=new AndCommand(((JoinCommand) cmd).getRight(), newCmd);
+			((JoinCommand) cmd).setRight(retCmd);
+		}else if (cmd!=null && newCmd!=null){
+			retCmd=new AndCommand(cmd, newCmd);
+		}
+		return retCmd;
+	}
+	public Command joinCommand(Command cmd, CharSequence newCmdStr){
+		List<String> args=new ArrayList<>();
+		Matcher m2=commandArgsPattern.matcher(newCmdStr);
+		while (m2.find()){
+			String arg=m2.group();
+			if ((arg.charAt(0) == '\'' || arg.charAt(0) == '\"') && (arg.charAt(0) == arg.charAt(arg.length()-1))){
+				args.add(arg.substring(1, arg.length()-1));
+			}else{
+				args.add(arg);
+			}
+		}
+		Command newCmd=createCommand(args.toArray(new String[args.size()]));
+		if (cmd==null){
+			return newCmd;
+		}
+		return joinCommand(cmd, newCmd);
+	}
 	public Command parseCommand(String command) {
 		Matcher m=commandLinePattern.matcher(command);
-		List<String> listArgs=new ArrayList<>();
-		
+	
+		Command firstJoin=null;
 		Command cmd=null;
+		StringBuffer buffer=new StringBuffer();
 		
 		while (m.find()){
-			String part=m.group();
-			if ("&&".equals(part)){
-				if (cmd==null){
-					cmd=new AndCommand(createCommand(listArgs.toArray(new String[listArgs.size()])), null);
-					listArgs.clear();
-				}
-			}else{
-				listArgs.add(part);
+			buffer.setLength(0);
+			m.appendReplacement(buffer, "");
+			cmd=joinCommand(cmd, buffer);
+			//Save the first JoinCommand as return command 
+			if (firstJoin==null && cmd instanceof JoinCommand){
+				firstJoin=cmd;
 			}
 		}
-		
-		if (cmd instanceof JoinCommand){
-			if (((JoinCommand) cmd).getRight()==null){
-				((JoinCommand) cmd).setRight(createCommand(listArgs.toArray(new String[listArgs.size()])));
-			}else{
-				throw new RuntimeException("Something is not right!");
-			}
-		}else{
-			cmd=createCommand(listArgs.toArray(new String[listArgs.size()]));
+		buffer.setLength(0);
+		m.appendTail(buffer);
+		if(buffer.length()>0){
+			cmd=joinCommand(cmd, buffer);
 		}
+		if (firstJoin!=null) return firstJoin;
 		return cmd;
 	}
 	

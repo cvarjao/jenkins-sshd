@@ -33,6 +33,7 @@ public class JenkinsFileSystemView extends org.apache.sshd.common.file.nativefs.
 		if (this.session.getAttribute(CURRENT_DIR)==null){
 			this.session.setAttribute(CURRENT_DIR, getVirtualUserDir());
 		}
+		LOG.debug("Created File System View. rootDir:"+physicalRootDir+" homeDir:"+virtualHomeDir);
 	}
 
 	/**
@@ -40,6 +41,9 @@ public class JenkinsFileSystemView extends org.apache.sshd.common.file.nativefs.
      */
     @Override
     public SshFile getFile(String file) {
+    	if (LOG.isDebugEnabled()){
+    		LOG.debug("CurrentDir:"+getCurrentDir()+" file: "+file);
+    	}
         return getFile(getCurrentDir(), file);
     }
 
