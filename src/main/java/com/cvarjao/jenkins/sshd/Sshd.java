@@ -19,7 +19,7 @@ import com.cvarjao.jenkins.sshd.factory.JenkinsSessionFactory;
 
 /***
  * 
- * @author ClÈcio Varj„o
+ * @author Cl√©cio Varj√£o
  * @see <p>
  *      http://caffeineiscodefuel.blogspot.ca/2013/04/apache-mina-sshd-publickeyauthenticator.html
  *      </p>
