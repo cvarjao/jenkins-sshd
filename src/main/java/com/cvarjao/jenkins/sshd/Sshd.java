@@ -61,7 +61,7 @@ public class Sshd {
 		_sshd.getProperties().put(SshServer.AUTH_METHODS, "publickey");
 		_sshd.setSessionFactory(new JenkinsSessionFactory());
 		//sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(new SftpSubsystem.Factory()));
-		_sshd.setFileSystemFactory(new JenkinsFileSystemFactory(props.getProperty(SSHD_ROOT_DIR), homeDir));
+		_sshd.setFileSystemFactory(new JenkinsFileSystemFactory(props.getProperty(SSHD_ROOT_DIR)));
 		_sshd.setCommandFactory(new JenkinsCommandFactory());
 		_sshd.setShellFactory(new ProcessShellFactory(new String[] {props.getProperty("shell.cmd", "cmd.exe"), "/K", "cd /d "+physycalHomeDir+""}, EnumSet.of(ProcessShellFactory.TtyOptions.Echo, ProcessShellFactory.TtyOptions.ICrNl, ProcessShellFactory.TtyOptions.ONlCr)));
 		//sshd.setIoServiceFactoryFactory(new MinaServiceFactoryFactory());

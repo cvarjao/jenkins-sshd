@@ -3,7 +3,6 @@ package com.cvarjao.jenkins.sshd.factory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,7 +18,9 @@ import com.cvarjao.jenkins.sshd.api.JoinCommand;
 import com.cvarjao.jenkins.sshd.command.AndCommand;
 import com.cvarjao.jenkins.sshd.command.CdCommand;
 import com.cvarjao.jenkins.sshd.command.ExecCommand;
+import com.cvarjao.jenkins.sshd.command.FalseCommand;
 import com.cvarjao.jenkins.sshd.command.MkdirCommand;
+import com.cvarjao.jenkins.sshd.command.PwdCommand;
 import com.cvarjao.jenkins.sshd.command.RmCommand;
 import com.cvarjao.jenkins.sshd.command.SetCommand;
 import com.cvarjao.jenkins.sshd.command.TestCommand;
@@ -88,6 +89,10 @@ public class JenkinsCommandFactory implements CommandFactory {
 	public Command createCommand(String[] commands) {
 		if (TrueCommand.COMMAND.equals(commands[0])){
 			return new TrueCommand();
+		}else if (FalseCommand.COMMAND.equals(commands[0])){
+			return new FalseCommand();
+		}else if (PwdCommand.COMMAND.equals(commands[0])){
+			return new PwdCommand();
 		}else if (CdCommand.COMMAND.equals(commands[0])){
 			return new CdCommand(commands.length>1?Arrays.copyOfRange(commands, 1, commands.length):new String[0]);
 		}else if (SetCommand.COMMAND.equals(commands[0])){

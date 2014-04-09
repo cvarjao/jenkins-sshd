@@ -11,24 +11,27 @@ import org.apache.sshd.common.file.SshFile;
 import org.apache.sshd.common.file.nativefs.NativeSshFile;
 import org.apache.sshd.server.Command;
 import org.apache.sshd.server.Environment;
+import org.apache.sshd.server.SessionAware;
+import org.apache.sshd.server.session.ServerSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.cvarjao.jenkins.sshd.api.HasChangeDir;
 import com.cvarjao.jenkins.sshd.file.NativeFileUtil;
 
-public class ExecCommand extends BaseCommand implements Command, FileSystemAware, Runnable {
+public class ExecCommand extends BaseCommand implements Command, SessionAware, Runnable, FileSystemAware {
 	private static final Logger LOG = LoggerFactory.getLogger(ExecCommand.class);
 	public static final int DEFAULT_BUFFER_SIZE = 8192;
 	private final int bufferSize = DEFAULT_BUFFER_SIZE;
 
 	private String[] cmds;
-	private FileSystemView fileSystemView;
 	private Thread streamHandler;
 	private Process process;
 	private InputStream shellIn;
 	private OutputStream shellOut;
 	private InputStream shellErr;
+	private ServerSession session;
+	private FileSystemView fileSystemView;
 
 	public ExecCommand(String[] cmds) {
 		this.cmds = cmds;
@@ -47,7 +50,7 @@ public class ExecCommand extends BaseCommand implements Command, FileSystemAware
 		}
 		LOG.info("Starting Process: '{}' and env: {}", builder.command(), builder.environment());
 
-		SshFile sshFile = this.fileSystemView.getFile(((HasChangeDir) this.fileSystemView).getCurrentDir());
+		SshFile sshFile = this.fileSystemView.getFile(((HasChangeDir) this.session).getCurrentDir());
 		File nativeFile = ((NativeSshFile)sshFile).getPhysicalFile();
 		builder.directory(nativeFile);
 		process = builder.start();
@@ -133,5 +136,10 @@ public class ExecCommand extends BaseCommand implements Command, FileSystemAware
 	@Override
 	public void run() {
 		pumpStreams();
+	}
+
+	@Override
+	public void setSession(ServerSession session) {
+		this.session=session;
 	}
 }
